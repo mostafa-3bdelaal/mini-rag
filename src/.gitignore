@@ -1,0 +1,48 @@
+# Virtual environments
+venv/
+env/
+.venv/
+conda-env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables (مهم جدًا - فيها الـ API keys)
+.env
+.env.local
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Vector DB / embeddings storage (لو موجودة محليًا)
+chroma_db/
+*.index
+*.faiss
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Model files / checkpoints (لو كبيرة الحجم)
+*.pt
+*.bin
+*.safetensors
+
+# Data files (لو فيها بيانات حساسة أو كبيرة)
+data/
+*.csv
