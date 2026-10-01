@@ -3,6 +3,7 @@ from ..LLMEnums import OpenAIEnums
 from openai import OpenAI
 import logging
 
+
 class OpenAIProvider(LLMInterface):
 
     def __init__(self, api_key: str, api_url: str=None,
