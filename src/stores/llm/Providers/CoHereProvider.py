@@ -2,6 +2,7 @@ from ..LLMInterface import LLMInterface
 from ..LLMEnums import CoHereEnums, DocumentTypeEnum
 import cohere
 import logging
+from typing import List, Union
 
 class CoHereProvider(LLMInterface):
 
@@ -22,6 +23,8 @@ class CoHereProvider(LLMInterface):
         self.embedding_size = None
 
         self.client = cohere.Client(api_key=self.api_key)
+        
+        self.enums = CoHereEnums
 
         self.logger = logging.getLogger(__name__)
 
@@ -63,7 +66,7 @@ class CoHereProvider(LLMInterface):
         
         return response.text
     
-    def embed_text(self, text: str, document_type: str = None):
+    def embed_text(self, text: Union[str, List[str]], document_type: str = None):
         if not self.client:
             self.logger.error("CoHere client was not set")
             return None
@@ -71,14 +74,18 @@ class CoHereProvider(LLMInterface):
         if not self.embedding_model_id:
             self.logger.error("Embedding model for CoHere was not set")
             return None
-        
-        input_type = CoHereEnums.DOCUMENT
-        if document_type == DocumentTypeEnum.QUERY:
-            input_type = CoHereEnums.QUERY
+
+    
+        if isinstance(text, str):
+            text = [text]
+
+        input_type = CoHereEnums.DOCUMENT.value
+        if document_type == DocumentTypeEnum.QUERY.value:
+            input_type = CoHereEnums.QUERY.value
 
         response = self.client.embed(
             model = self.embedding_model_id,
-            texts = [self.process_text(text)],
+            texts = [self.process_text(t) for t in text],  # CHANGED
             input_type = input_type,
             embedding_types=['float'],
         )
@@ -87,7 +94,8 @@ class CoHereProvider(LLMInterface):
             self.logger.error("Error while embedding text with CoHere")
             return None
         
-        return response.embeddings.float[0]
+        # CHANGED: بترجّع list of vectors بدل vector واحد
+        return [list(vec) for vec in response.embeddings.float]
     
     def construct_prompt(self, prompt: str, role: str):
         return {

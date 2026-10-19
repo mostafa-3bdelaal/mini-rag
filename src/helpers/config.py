@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     GENERATION_BACKEND :str
     EMBEDDING_BACKEND :str
 
+    GROQ_API_KEY: str = None
     OPENAI_API_KEY: str= None
     OPENAI_API_URL: str=None
     COHERE_API_KEY :str=None
@@ -32,6 +33,9 @@ class Settings(BaseSettings):
     VECTOR_DB_PATH : str
     VECTOR_DB_DISTANCE_METHOD: str = None
 
+    DEFAULT_LANG: str= "en"
+    PRIMARY_LANG: str= "en"
+    
     class Config:
         env_file = ".env"
 
