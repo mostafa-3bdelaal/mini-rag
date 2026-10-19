@@ -161,6 +161,3 @@ class NLPController(BaseController):
         )
 
         return answer, full_prompt, chat_history
-    
-    
-    
