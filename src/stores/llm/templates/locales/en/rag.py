@@ -19,12 +19,15 @@ system_prompt = Template("\n".join([
 document_prompt = Template(
     "\n".join([
         "## Document No: $doc_num",
-        "### Content: $chunk_text",
+        "--> Content: $chunk_text",
     ])
 )
 
 #### Footer ####
 footer_prompt = Template("\n".join([
     "Based only on the above documents, please generate an answer for the user.",
+    "## Question:",
+    "$query",
+    "",
     "## Answer:",
 ]))

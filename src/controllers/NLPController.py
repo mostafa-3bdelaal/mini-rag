@@ -4,6 +4,9 @@ from stores.llm.LLMEnums import DocumentTypeEnum
 from typing import List
 import json
 import time
+import logging
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class NLPController(BaseController):
@@ -50,7 +53,6 @@ class NLPController(BaseController):
                 return None
             vectors.extend(batch_vectors)
 
-            # عشان نبعد عن الـ rate limit بتاع الـ Trial key
             if i + batch_size < len(texts):
                 time.sleep(sleep_seconds)
         return vectors
@@ -66,7 +68,7 @@ class NLPController(BaseController):
         texts = [c.chunk_text for c in chunks]
         metadata = [c.chunk_metadata for c in chunks]
 
-        vectors = self._embed_in_batches(texts)  
+        vectors = self._embed_in_batches(texts)
         if not vectors or len(vectors) != len(texts):
             return False
 
@@ -86,12 +88,13 @@ class NLPController(BaseController):
             record_ids=chunks_ids,
         )
 
-        return bool(is_inserted)  
+        return bool(is_inserted)
 
     def search_vector_db_collection(self, project: Project, text: str, limit: int = 10):
 
         # step1: get collection name
         collection_name = self.create_collection_name(project_id=project.project_id)
+        logger.info(f"[RAG] searching in collection: {collection_name}")
 
         # step2: get text embedding vector
         vectors = self.embedding_client.embed_text(
@@ -100,6 +103,7 @@ class NLPController(BaseController):
         )
 
         if not vectors or len(vectors) == 0:
+            logger.error("[RAG] embedding the query FAILED (check embedding API key / quota / model)")
             return False
         vector = vectors[0]
 
@@ -111,8 +115,11 @@ class NLPController(BaseController):
         )
 
         if not results:
+            logger.error(f"[RAG] vector search returned nothing for collection: {collection_name} "
+                         f"(collection missing or empty -> do push first)")
             return False
 
+        logger.info(f"[RAG] retrieved {len(results)} documents")
         return results
 
     def answer_rag_question(self, project: Project, query: str, limit: int = 10):
@@ -127,6 +134,7 @@ class NLPController(BaseController):
         )
 
         if not retrieved_documents or len(retrieved_documents) == 0:
+            logger.error("[RAG] stopping: no retrieved documents")
             return answer, full_prompt, chat_history
 
         # step2: Construct LLM prompt
@@ -134,8 +142,8 @@ class NLPController(BaseController):
 
         documents_prompts = "\n".join([
             self.template_parser.get("rag", "document_prompt", {
-                    "doc_num": idx + 1,
-                    "chunk_text": doc.text,
+                "doc_num": idx + 1,
+                "chunk_text": doc.text,
             })
             for idx, doc in enumerate(retrieved_documents)
         ])
@@ -143,7 +151,7 @@ class NLPController(BaseController):
         footer_prompt = self.template_parser.get("rag", "footer_prompt", {
             "query": query
         })
-        
+
         # step3: Construct Generation Client Prompts
         chat_history = [
             self.generation_client.construct_prompt(
@@ -159,5 +167,10 @@ class NLPController(BaseController):
             prompt=full_prompt,
             chat_history=chat_history
         )
+
+        if not answer:
+            logger.error("[RAG] LLM returned None (check API key / quota / model name / rate limit)")
+        else:
+            logger.info(f"[RAG] answer generated ({len(answer)} chars)")
 
         return answer, full_prompt, chat_history
