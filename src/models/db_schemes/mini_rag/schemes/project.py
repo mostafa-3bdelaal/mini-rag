@@ -17,4 +17,3 @@ class Project(SQLAlchemyBase):
     chunks = relationship("DataChunk", back_populates="project")
     assets = relationship("Asset", back_populates="project")
     
-    new_dummy_col = Column(Integer, nullable=False)  
